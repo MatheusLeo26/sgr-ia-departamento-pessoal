@@ -56,4 +56,4 @@ TOP_HEADER_H   = 60
 CORNER_R       = 8
 PAD            = 16
 
-VERSION        = "1.0.3"
+VERSION        = "1.0.4"

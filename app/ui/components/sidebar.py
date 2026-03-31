@@ -37,7 +37,7 @@ class Sidebar(ctk.CTkFrame):
         self.pack_propagate(False)
 
         # Logo / brand block (Aumentado para o novo Logo SGR)
-        brand = ctk.CTkFrame(self, fg_color="transparent", height=T.HEADER_H)
+        brand = ctk.CTkFrame(self, fg_color="transparent", height=T.SIDEBAR_LOGO_H)
         brand.pack(fill="x", pady=(20, 0))
         brand.pack_propagate(False)
 
