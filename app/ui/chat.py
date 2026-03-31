@@ -12,6 +12,15 @@ class ChatPage(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master, fg_color=T.BG_MAIN)
         self._chat_service = ChatService()
+        
+        # Load Roberta Avatar
+        self._avatar_img = None
+        avatar_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "app", "assets", "roberta_avatar.png")
+        if os.path.exists(avatar_path):
+            self._avatar_img = ctk.CTkImage(light_image=Image.open(avatar_path), 
+                                            dark_image=Image.open(avatar_path), 
+                                            size=(40, 40))
+
         self._build()
         self._show_initial_greeting()
 
@@ -19,6 +28,11 @@ class ChatPage(ctk.CTkFrame):
         # Header
         hdr = ctk.CTkFrame(self, fg_color="transparent")
         hdr.pack(fill="x", padx=T.PAD, pady=(T.PAD, 6))
+        
+        # Header Avatar (Optional touch)
+        if self._avatar_img:
+            ctk.CTkLabel(hdr, image=self._avatar_img, text="").pack(side="left", padx=(0, 10))
+
         ctk.CTkLabel(hdr, text="Roberta Bot", font=ctk.CTkFont(T.FONT_FAMILY, 22, "bold"), text_color=T.TEXT).pack(side="left")
         ctk.CTkLabel(hdr, text="Assistente de DP e Robô de Dúvidas", font=ctk.CTkFont(T.FONT_FAMILY, 11), text_color=T.ACCENT_LIGHT).pack(side="left", padx=14, pady=4)
 
@@ -52,12 +66,18 @@ class ChatPage(ctk.CTkFrame):
         msg_frame.pack(fill="x", pady=8, padx=10)
 
         # Bubble alignment
-        align = "e" if is_user else "w"
         color = T.PRIMARY_DARK if is_user else T.BG_CARD
         text_color = T.TEXT if is_user else T.TEXT_SEC
         
-        bubble = ctk.CTkFrame(msg_frame, fg_color=color, corner_radius=12)
-        bubble.pack(side="right" if is_user else "left", padx=5)
+        # Container for Avatar + Bubble (for Roberta)
+        container = ctk.CTkFrame(msg_frame, fg_color="transparent")
+        container.pack(side="right" if is_user else "left", anchor="e" if is_user else "w")
+
+        if not is_user and self._avatar_img:
+            ctk.CTkLabel(container, image=self._avatar_img, text="").pack(side="left", anchor="n", padx=(0, 8))
+
+        bubble = ctk.CTkFrame(container, fg_color=color, corner_radius=12)
+        bubble.pack(side="left", padx=0)
 
         # Sender Label
         lbl_sender = ctk.CTkLabel(bubble, text=sender, font=ctk.CTkFont(T.FONT_FAMILY, 9, "bold"), 
