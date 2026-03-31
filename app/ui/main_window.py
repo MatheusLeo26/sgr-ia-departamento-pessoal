@@ -20,6 +20,11 @@ class MainWindow(ctk.CTk):
 
         ctk.set_appearance_mode("dark")
 
+        # Window Icon
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "app", "assets", "robot_report_icon.ico")
+        if os.path.exists(icon_path):
+            self.iconbitmap(icon_path)
+
         self._build_layout()
         self.navigate("dashboard")
 
