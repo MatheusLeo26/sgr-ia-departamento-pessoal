@@ -10,6 +10,8 @@ MENU_ITEMS = [
     ("funcionarios",    "👤  Funcionários"),
     ("empresas",        "🏢  Empresas"),
     ("relatorios",      "📄  Relatórios"),
+    ("tutoriais",       "📚  Tutoriais"),
+    ("chat",            "🤖  Roberta Bot"),
 ]
 
 

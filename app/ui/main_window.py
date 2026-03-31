@@ -123,6 +123,12 @@ class MainWindow(ctk.CTk):
         elif key == "relatorios":
             from app.ui.relatorios import RelatoriosPage
             page = RelatoriosPage(self.content)
+        elif key == "tutoriais":
+            from app.ui.tutoriais import TutoriaisPage
+            page = TutoriaisPage(self.content)
+        elif key == "chat":
+            from app.ui.chat import ChatPage
+            page = ChatPage(self.content)
         else:
             page = _PlaceholderPage(self.content, key)
 
