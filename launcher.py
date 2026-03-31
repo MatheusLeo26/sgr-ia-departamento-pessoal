@@ -24,7 +24,7 @@ class SGRIA_Launcher(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("SGR.IA — Verificação")
-        self.geometry("450x180")
+        self.geometry("450x300")
         self.resizable(False, False)
         self.configure(fg_color=T.BG_MAIN)
         self.overrideredirect(True) # Janela sem bordas (Splash style)
@@ -33,7 +33,7 @@ class SGRIA_Launcher(ctk.CTk):
         screen_w = self.winfo_screenwidth()
         screen_h = self.winfo_screenheight()
         x = (screen_w // 2) - (450 // 2)
-        y = (screen_h // 2) - (180 // 2)
+        y = (screen_h // 2) - (300 // 2)
         self.geometry(f"+{x}+{y}")
 
         self._build_ui()
@@ -48,16 +48,29 @@ class SGRIA_Launcher(ctk.CTk):
 
         # Content
         content = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        content.pack(pady=30, padx=40, fill="both", expand=True)
+        content.pack(pady=20, padx=40, fill="both", expand=True)
 
-        # Logo and Title
+        # Logo
+        logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app", "assets", "logo_sgr.png")
+        # No builder, os assets podem estar no script dir ou no _MEIPASS
+        if not os.path.exists(logo_path):
+             import sys
+             if getattr(sys, 'frozen', False):
+                 logo_path = os.path.join(sys._MEIPASS, "app", "assets", "logo_sgr.png")
+
+        if os.path.exists(logo_path):
+            img_p = Image.open(logo_path)
+            logo_img = ctk.CTkImage(light_image=img_p, dark_image=img_p, size=(100, 100))
+            ctk.CTkLabel(content, image=logo_img, text="").pack(pady=(0, 10))
+
+        # Title
         title_lbl = ctk.CTkLabel(content, text="SGR.IA — DEPARTAMENTO PESSOAL", 
-                                font=ctk.CTkFont(T.FONT_FAMILY, 15, "bold"), text_color=T.TEXT)
-        title_lbl.pack(anchor="w")
+                                font=ctk.CTkFont(T.FONT_FAMILY, 14, "bold"), text_color=T.TEXT)
+        title_lbl.pack()
 
         self.status_lbl = ctk.CTkLabel(content, text="Verificando atualizações...", 
                                       font=ctk.CTkFont(T.FONT_FAMILY, 11), text_color=T.TEXT_MUTED)
-        self.status_lbl.pack(anchor="w", pady=(2, 10))
+        self.status_lbl.pack(pady=(2, 10))
 
         # Progress bar
         self.progress = ctk.CTkProgressBar(content, height=10, fg_color=T.BG_INPUT, progress_color=T.PRIMARY)

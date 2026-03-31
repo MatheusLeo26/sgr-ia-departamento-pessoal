@@ -13,12 +13,17 @@ except ImportError:
 class MainWindow(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("SGR.IA — Departamento Pessoal | SGR Contábil")
-        self.geometry("1280x780")
-        self.minsize(1024, 680)
-        self.configure(fg_color=T.BG_MAIN)
+        from app.services.config_service import ConfigService
+        self._config = ConfigService()
+        
+        # Carrega o tema salvo
+        current_theme = self._config.get_appearance_mode()
+        ctk.set_appearance_mode(current_theme)
 
-        ctk.set_appearance_mode("dark")
+        self.title("SGR.IA — Departamento Pessoal | SGR Contábil")
+        self.geometry("1400x850") # Um pouco maior para os novos temas
+        self.minsize(1024, 720)
+        self.configure(fg_color=T.BG_MAIN)
 
         # Window Icon
         icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "app", "assets", "robot_report_icon.ico")
@@ -34,42 +39,23 @@ class MainWindow(ctk.CTk):
         self.grid_columnconfigure(1, weight=1)
 
         # ---- Header --------------------------------------------------
-        header = ctk.CTkFrame(self, height=T.HEADER_H, fg_color=T.BG_SIDEBAR, corner_radius=0)
-        header.grid(row=0, column=0, columnspan=2, sticky="ew")
+        header = ctk.CTkFrame(self, height=T.TOP_HEADER_H, fg_color=T.BG_PANEL, corner_radius=0)
+        header.grid(row=0, column=1, sticky="ew")
         header.grid_propagate(False)
-        header.grid_columnconfigure(1, weight=1)
 
-        # Logo
-        logo_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-            "app", "assets", "logo_sgr.png"
-        )
-        if PIL_OK and os.path.exists(logo_path):
-            img = ctk.CTkImage(
-                light_image=Image.open(logo_path),
-                dark_image=Image.open(logo_path),
-                size=(120, 40),
-            )
-            ctk.CTkLabel(header, image=img, text="").grid(row=0, column=0, padx=20, pady=12)
-        else:
-            ctk.CTkLabel(
-                header, text="[ SGR ]",
-                font=ctk.CTkFont(T.FONT_FAMILY, 13, "bold"),
-                text_color=T.ACCENT_LIGHT,
-            ).grid(row=0, column=0, padx=20, pady=12)
-
-        # System name
-        ctk.CTkLabel(
+        # System name / Page Title
+        self.title_lbl = ctk.CTkLabel(
             header, text="SGR.IA",
-            font=ctk.CTkFont(T.FONT_FAMILY, 18, "bold"),
-            text_color=T.TEXT,
-        ).grid(row=0, column=1, padx=4, pady=0, sticky="w")
+            font=ctk.CTkFont(T.FONT_FAMILY, 16, "bold"),
+            text_color=T.PRIMARY,
+        )
+        self.title_lbl.pack(side="left", padx=20)
 
         ctk.CTkLabel(
             header, text="Departamento Pessoal Inteligente",
             font=ctk.CTkFont(T.FONT_FAMILY, 10),
             text_color=T.TEXT_MUTED,
-        ).grid(row=0, column=2, padx=(0, 20), pady=0, sticky="e")
+        ).pack(side="right", padx=20)
 
         # ---- Separator under header ----------------------------------
         ctk.CTkFrame(self, height=1, fg_color=T.SEPARATOR).grid(

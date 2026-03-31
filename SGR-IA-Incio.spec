@@ -5,7 +5,7 @@ a = Analysis(
     ['launcher.py'],
     pathex=[],
     binaries=[],
-    datas=[('C:\\Users\\SrgRH\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\customtkinter', 'customtkinter')],
+    datas=[('C:\\Users\\SrgRH\\.gemini\\antigravity\\scratch\\sgr-ia\\app\\assets', 'app/assets'), ('C:\\Users\\SrgRH\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\customtkinter', 'customtkinter')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

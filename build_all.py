@@ -33,6 +33,7 @@ def build_launcher():
         '--windowed',
         '--name=SGR-IA-Incio',
         f'--icon={os.path.join(BASE_DIR, "app", "assets", "robot_report_icon.ico")}',
+        '--add-data', f'{os.path.join(BASE_DIR, "app", "assets")};app/assets',
         '--add-data', f'{CTK_DIR};customtkinter',
         '--clean',
         '-y'
