@@ -7,14 +7,16 @@ import os
 
 class ConfigService:
     def __init__(self):
-        self.config_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-            "config.json"
-        )
-        self.default_db = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-            "sgr.db"
-        )
+        import sys
+        if getattr(sys, 'frozen', False):
+            # No modo executável (.exe), o root é a pasta onde o .exe está
+            self.root_dir = os.path.dirname(sys.executable)
+        else:
+            # No modo script, o root é 3 níveis acima deste arquivo
+            self.root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            
+        self.config_path = os.path.join(self.root_dir, "config.json")
+        self.default_db  = os.path.join(self.root_dir, "sgr.db")
 
     def get_db_path(self) -> str:
         if not os.path.exists(self.config_path):

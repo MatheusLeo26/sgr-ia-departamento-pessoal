@@ -52,3 +52,5 @@ SIDEBAR_W    = 230
 HEADER_H     = 65
 CORNER_R     = 8
 PAD          = 16
+
+VERSION      = "1.0.1"
