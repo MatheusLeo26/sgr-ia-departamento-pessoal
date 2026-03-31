@@ -4,6 +4,10 @@ from app.controllers.empresa_controller import EmpresaController
 from app.controllers.funcionario_controller import FuncionarioController
 from app.controllers.rescisao_controller import RescisaoController
 from app.services.validators import formatar_data_br
+import tkinter.filedialog as fd
+from tkinter import messagebox
+from app.services.config_service import ConfigService
+import os
 
 
 def _card(master, title: str, value: str, color: str, sub: str = "") -> ctk.CTkFrame:
@@ -33,6 +37,16 @@ class DashboardPage(ctk.CTkFrame):
         hdr.pack(fill="x", padx=T.PAD, pady=(T.PAD, 8))
         ctk.CTkLabel(hdr, text="Dashboard", font=ctk.CTkFont(T.FONT_FAMILY, 22, "bold"), text_color=T.TEXT).pack(side="left")
         ctk.CTkLabel(hdr, text="Visão geral operacional", font=ctk.CTkFont(T.FONT_FAMILY, 12), text_color=T.TEXT_MUTED).pack(side="left", padx=12, pady=4)
+        
+        # Botão de Configuração de Rede
+        ctk.CTkButton(
+            hdr, text="🌐 CONFIGURAÇÃO DE REDE", width=190, height=32,
+            fg_color=T.BG_PANEL, hover_color=T.PRIMARY_HOVER,
+            font=ctk.CTkFont(T.FONT_FAMILY, 10, "bold"),
+            text_color=T.TEXT_SEC,
+            corner_radius=T.CORNER_R,
+            command=self._configurar_rede
+        ).pack(side="right", pady=4)
 
         # ---- KPI row -------------------------------------------------
         kpi_row = ctk.CTkFrame(self, fg_color="transparent")
@@ -127,3 +141,18 @@ class DashboardPage(ctk.CTkFrame):
                         font=ctk.CTkFont(T.FONT_FAMILY, 11),
                         text_color=T.TEXT, anchor="w",
                     ).pack(side="left", padx=10, pady=6)
+
+    def _configurar_rede(self):
+        config_service = ConfigService()
+        current_path = config_service.get_db_path()
+        
+        new_path = fd.askopenfilename(
+            title="Selecionar Banco de Dados SGR.IA",
+            initialdir=os.path.dirname(current_path),
+            filetypes=[("Banco de Dados SQLite", "*.db"), ("Todos os Arquivos", "*.*")]
+        )
+        
+        if new_path:
+            config_service.set_db_path(new_path)
+            messagebox.showinfo("SGR.IA", f"Configuração atualizada!\nO banco agora está em:\n{new_path}\n\nPor favor, reinicie o aplicativo.")
+

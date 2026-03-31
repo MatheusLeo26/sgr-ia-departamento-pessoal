@@ -25,5 +25,5 @@ venv/
 Thumbs.db
 .DS_Store
 
-# Tests
-test_*.py
+# Local config
+config.json
