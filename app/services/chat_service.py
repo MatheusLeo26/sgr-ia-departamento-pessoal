@@ -28,7 +28,7 @@ class ChatService:
         
         self.chat_session = None
         self.ollama_url = "http://127.0.0.1:11434/api/chat"
-        self.ollama_model = "llama3:latest"
+        self.ollama_model = "llama3.2" # MUDANÇA ENORME: O modelo super ágil foi selecionado!
         self._setup_gemini()
 
     def _load_config(self):
@@ -83,11 +83,17 @@ class ChatService:
                 "messages": [{"role": "system", "content": self.system_instruction}, {"role": "user", "content": msg}],
                 "stream": False
             }
-            res = requests.post(self.ollama_url, json=payload, timeout=60)
+            res = requests.post(self.ollama_url, json=payload, timeout=300)
+            
             if res.status_code == 200:
                 return res.json().get("message", {}).get("content", "Erro: Ollama retornou resposta vazia.")
+            else:
+                raise Exception(f"Ollama retornou HTTP {res.status_code}: {res.text}")
+                
+        except requests.exceptions.ReadTimeout:
+            return "⏳ Ollama está demorando muito para pensar... Como o seu PC está processando a IA sem uma placa de vídeo dedicada forte (apenas CPU), a primeira resposta pode demorar até 2 minutos. Por favor, seja paciente e tente perguntar novamente!"
         except Exception as e:
-            # Se o Ollama não estiver rodando, continua para o Gemini (Fallback)
+            # Se o Ollama não estiver rodando (ConnectionError), continua para o Gemini (Fallback)
             print(f"Ollama local offline ou erro: {e}. Tentando Gemini...")
 
         # --- FALLBACK PARA GEMINI (Caminho Original) ---
@@ -121,3 +127,45 @@ class ChatService:
             if "429" in erro:
               return "Desculpe, a cota de uso da IA remota (Gemini) foi atingida. Por favor, certifique-se de que o Ollama está rodando localmente para uso ilimitado."
             return f"Desculpe, ocorreu um erro na comunicação com a IA: {erro}"
+
+    def process_message_stream(self, message: str):
+        """Nova versão da comunicação que retorna o texto aos poucos (Efeito Máquina de Escrever)"""
+        msg = message.strip()
+        if not msg:
+            yield ""
+            return
+
+        # Tentativa OLLAMA LOCAL STREAM
+        try:
+            payload = {
+                "model": self.ollama_model, 
+                "messages": [{"role": "system", "content": self.system_instruction}, {"role": "user", "content": msg}],
+                "stream": True # <--- ATIVA O STREAMING DO OLLAMA
+            }
+            res = requests.post(self.ollama_url, json=payload, timeout=300, stream=True)
+            
+            if res.status_code == 200:
+                for line in res.iter_lines():
+                    if line:
+                        chunk = json.loads(line)
+                        yield chunk.get("message", {}).get("content", "")
+            else:
+                yield f"Erro HTTP {res.status_code}: {res.text}"
+                
+        except requests.exceptions.ReadTimeout:
+            yield "⏳ Timeout: A IA local demorou para responder. O PC pode estar sobrecarregado."
+        except Exception as e:
+            # FALLBACK GEMINI STREAM
+            if not self.chat_session:
+                self._load_config()
+                self._setup_gemini()
+                
+            if self.chat_session:
+                try:
+                    response = self.chat_session.send_message(msg, stream=True)
+                    for chunk in response:
+                        yield chunk.text
+                except Exception as fallback_e:
+                    yield f" Erro no fallback: {fallback_e}"
+            else:
+                yield f" Erro total de conexão: {e}"

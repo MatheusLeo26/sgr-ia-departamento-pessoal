@@ -123,21 +123,65 @@ class ChatPage(ctk.CTkFrame):
         self._entry.delete(0, "end")
         self._add_message("Você", msg, is_user=True)
         
-        # Desabilita interação enquanto carrega
+        # Desabilita interação provisoriamente
         self._entry.configure(state="disabled")
         self._send_btn.configure(state="disabled")
         
-        # Inicia Thead para não congelar o CustomTkinter
+        # Cria a bolha vazia para a Roberta ("Pensando...")
+        lbl_text = self._add_streaming_bubble("Roberta Bot")
+        
         import threading
-        def fetch_response():
-            response = self._chat_service.process_message(msg)
-            # Retorna para a main thread do Tkinter (thread-safe UI update)
-            self.after(0, lambda: self._on_response(response))
+        def fetch_stream():
+            full_text = ""
+            try:
+                for chunk in self._chat_service.process_message_stream(msg):
+                    if chunk:
+                        full_text += chunk
+                        # Atualiza a label em tempo real (Thread-Safe)
+                        self.after(0, lambda t=full_text: self._update_stream_bubble(lbl_text, t))
+            except Exception as e:
+                pass
+            
+            # Streaming concluído
+            self.after(0, lambda t=full_text: self._finalize_stream(lbl_text, t))
 
-        threading.Thread(target=fetch_response, daemon=True).start()
+        threading.Thread(target=fetch_stream, daemon=True).start()
 
-    def _on_response(self, response):
-        self._add_message("Roberta Bot", response, is_user=False)
+    def _add_streaming_bubble(self, sender):
+        """Cria e retorna a Label de texto vazia para ser populada pelo stream."""
+        msg_frame = ctk.CTkFrame(self._chat_scroll, fg_color="transparent")
+        msg_frame.pack(fill="x", pady=8, padx=10)
+
+        color = T.BG_CARD
+        text_color = T.TEXT
+        
+        container = ctk.CTkFrame(msg_frame, fg_color="transparent")
+        container.pack(side="left", anchor="w")
+
+        if self._avatar_img:
+            ctk.CTkLabel(container, image=self._avatar_img, text="").pack(side="left", anchor="n", padx=(0, 8))
+
+        bubble = ctk.CTkFrame(container, fg_color=color, corner_radius=15)
+        bubble.pack(side="left", padx=0)
+
+        lbl_sender = ctk.CTkLabel(bubble, text=sender, font=ctk.CTkFont(T.FONT_FAMILY, 9, "bold"), text_color=T.ACCENT)
+        lbl_sender.pack(anchor="w", padx=12, pady=(8, 2))
+
+        # Inicia com marcador visual
+        lbl_text = ctk.CTkLabel(bubble, text="▌", font=ctk.CTkFont(T.FONT_FAMILY, 12), text_color=text_color, wraplength=450, justify="left")
+        lbl_text.pack(anchor="w", padx=12, pady=(0, 10))
+
+        self._chat_scroll._parent_canvas.yview_moveto(1.0)
+        return lbl_text
+
+    def _update_stream_bubble(self, lbl_text, current_text):
+        """Atualiza o texto da bolha com um cursor visual '▌'"""
+        lbl_text.configure(text=current_text + "▌")
+        self._chat_scroll._parent_canvas.yview_moveto(1.0)
+
+    def _finalize_stream(self, lbl_text, final_text):
+        """Limpa o cursor e reabilita o painel"""
+        lbl_text.configure(text=final_text)
         self._entry.configure(state="normal")
         self._send_btn.configure(state="normal")
         self._entry.focus()
