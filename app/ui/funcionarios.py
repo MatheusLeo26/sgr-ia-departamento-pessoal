@@ -5,6 +5,8 @@ from app.controllers.funcionario_controller import FuncionarioController
 from app.controllers.empresa_controller import EmpresaController
 from app.models.funcionario import Funcionario
 from app.services.validators import formatar_cpf, formatar_data_br
+from app.services.import_service import ImportService
+from tkinter import filedialog
 
 
 class FuncionariosPage(ctk.CTkFrame):
@@ -12,6 +14,7 @@ class FuncionariosPage(ctk.CTkFrame):
         super().__init__(master, fg_color=T.BG_MAIN)
         self._ctrl  = FuncionarioController()
         self._ectr  = EmpresaController()
+        self._import_service = ImportService()
         self._editing_id = None
         self._empresas   = []
         self._build()
@@ -21,7 +24,21 @@ class FuncionariosPage(ctk.CTkFrame):
         hdr = ctk.CTkFrame(self, fg_color="transparent")
         hdr.pack(fill="x", padx=T.PAD, pady=(T.PAD, 8))
         ctk.CTkLabel(hdr, text="Funcionários", font=ctk.CTkFont(T.FONT_FAMILY, 22, "bold"), text_color=T.TEXT).pack(side="left")
-        ctk.CTkButton(hdr, text="+ Novo Funcionário", width=160, height=34, fg_color=T.PRIMARY, hover_color=T.PRIMARY_HOVER, font=ctk.CTkFont(T.FONT_FAMILY, 12, "bold"), corner_radius=T.CORNER_R, command=self._limpar).pack(side="right")
+        ctk.CTkButton(
+            hdr, text="+ Novo Funcionário", width=160, height=34, 
+            fg_color=T.PRIMARY, hover_color=T.PRIMARY_HOVER, 
+            font=ctk.CTkFont(T.FONT_FAMILY, 12, "bold"), 
+            corner_radius=T.CORNER_R, command=self._limpar
+        ).pack(side="right", padx=(8, 0))
+        
+        ctk.CTkButton(
+            hdr, text="Importar Planilha", width=160, height=34,
+            fg_color=T.BG_INPUT, border_color=T.BORDER, border_width=1,
+            text_color=T.TEXT_SEC, hover_color=T.BORDER,
+            font=ctk.CTkFont(T.FONT_FAMILY, 12, "bold"),
+            corner_radius=T.CORNER_R,
+            command=self._importar,
+        ).pack(side="right")
 
         body = ctk.CTkFrame(self, fg_color="transparent")
         body.pack(fill="both", expand=True, padx=T.PAD, pady=4)
@@ -175,3 +192,19 @@ class FuncionariosPage(ctk.CTkFrame):
         if messagebox.askyesno("SGR.IA", f"Desativar funcionário '{func.nome}'?"):
             self._ctrl.excluir(func.id)
             self._refresh_list()
+
+    def _importar(self):
+        """Abre seletor de arquivo para importar funcionários do Excel."""
+        fpath = filedialog.askopenfilename(
+            title="Importar Funcionários",
+            filetypes=[("Excel Files", "*.xlsx *.xls")]
+        )
+        if not fpath:
+            return
+        
+        count, msg = self._import_service.importar_funcionarios(fpath)
+        if count > 0:
+            messagebox.showinfo("SGR.IA", msg)
+            self._refresh_list()
+        else:
+            messagebox.showerror("SGR.IA", msg)

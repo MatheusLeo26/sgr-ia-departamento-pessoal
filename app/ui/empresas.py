@@ -4,12 +4,15 @@ from app.ui import theme as T
 from app.controllers.empresa_controller import EmpresaController
 from app.models.empresa import Empresa
 from app.services.validators import formatar_cnpj
+from app.services.import_service import ImportService
+from tkinter import filedialog
 
 
 class EmpresasPage(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master, fg_color=T.BG_MAIN)
         self._ctrl = EmpresaController()
+        self._import_service = ImportService()
         self._editing_id = None
         self._build()
 
@@ -25,6 +28,15 @@ class EmpresasPage(ctk.CTkFrame):
             font=ctk.CTkFont(T.FONT_FAMILY, 12, "bold"),
             corner_radius=T.CORNER_R,
             command=self._abrir_form,
+        ).pack(side="right", padx=(8, 0))
+        
+        ctk.CTkButton(
+            hdr, text="Importar Planilha", width=150, height=34,
+            fg_color=T.BG_INPUT, border_color=T.BORDER, border_width=1,
+            text_color=T.TEXT_SEC, hover_color=T.BORDER,
+            font=ctk.CTkFont(T.FONT_FAMILY, 12, "bold"),
+            corner_radius=T.CORNER_R,
+            command=self._importar,
         ).pack(side="right")
 
         # Split: list | form
@@ -158,3 +170,19 @@ class EmpresasPage(ctk.CTkFrame):
         if messagebox.askyesno("SGR.IA", f"Desativar empresa '{emp.razao_social}'?"):
             self._ctrl.excluir(emp.id)
             self._refresh_list()
+
+    def _importar(self):
+        """Abre seletor de arquivo para importar empresas do Excel."""
+        fpath = filedialog.askopenfilename(
+            title="Importar Empresas",
+            filetypes=[("Excel Files", "*.xlsx *.xls")]
+        )
+        if not fpath:
+            return
+        
+        count, msg = self._import_service.importar_empresas(fpath)
+        if count > 0:
+            messagebox.showinfo("SGR.IA", msg)
+            self._refresh_list()
+        else:
+            messagebox.showerror("SGR.IA", msg)
