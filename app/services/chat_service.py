@@ -27,8 +27,8 @@ class ChatService:
         )
         
         self.chat_session = None
-        self.ollama_url = "http://localhost:11434/api/chat"
-        self.ollama_model = "llama3" # Alterado para o padrão do 'ollama run llama3'
+        self.ollama_url = "http://127.0.0.1:11434/api/chat"
+        self.ollama_model = "llama3:latest"
         self._setup_gemini()
 
     def _load_config(self):
@@ -62,7 +62,7 @@ class ChatService:
         try:
             # Tenta listar os modelos para ver se o serviço responde
             import requests
-            res = requests.get("http://localhost:11434/api/tags", timeout=2)
+            res = requests.get("http://127.0.0.1:11434/api/tags", timeout=2)
             if res.status_code == 200:
                 models = [m['name'] for m in res.json().get('models', [])]
                 # Verifica se o modelo configurado existe na lista (ou o nome base dele)
