@@ -44,8 +44,8 @@ class Sidebar(ctk.CTkFrame):
         logo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "app", "assets", "logo_sgr.png")
         if os.path.exists(logo_path):
             img = Image.open(logo_path)
-            logo_img = ctk.CTkImage(light_image=img, dark_image=img, size=(190, 190))
-            ctk.CTkLabel(brand, image=logo_img, text="").pack(expand=True)
+            logo_img = ctk.CTkImage(light_image=img, dark_image=img, size=(150, 150))
+            ctk.CTkLabel(brand, image=logo_img, text="").pack(expand=True, pady=10)
         else:
             ctk.CTkLabel(brand, text="SGR.IA", font=ctk.CTkFont(T.FONT_FAMILY, 24, "bold"), text_color=T.PRIMARY).pack(expand=True)
 
@@ -125,8 +125,8 @@ class Sidebar(ctk.CTkFrame):
         self._active = key
         if key in self._buttons:
             self._buttons[key].configure(
-                fg_color=T.PRIMARY_DARK,
-                text_color=T.TEXT,
+                fg_color=T.PRIMARY,
+                text_color="#FFFFFF", # Sempre branco no destaque
             )
 
     def set_active(self, key: str):

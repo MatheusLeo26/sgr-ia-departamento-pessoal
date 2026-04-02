@@ -54,8 +54,11 @@ def deploy_to_server():
     # Copia o lançador para a raiz do Z:\SGR-IA para fácil acesso
     shutil.copy2(os.path.join(dist_dir, "SGR-IA-Incio.exe"), r"Z:\SGR-IA\SGR-IA-Incio.exe")
     
-    # Cria o arquivo de configuração padrão no servidor
-    config_data = {"db_path": r"Z:\SGR-IA\sgr.db"}
+    # Cria o arquivo de configuração padrão no servidor mantendo a chave
+    config_data = {
+        "db_path": r"Z:\SGR-IA\sgr.db",
+        "gemini_api_key": "AIzaSyC5Sumr-RnOkYl6zsRPP6Z-HtHpS6XtMwM"
+    }
     with open(os.path.join(SERVER_DIR, "config.json"), "w") as f:
         import json
         json.dump(config_data, f, indent=4)

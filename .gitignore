@@ -27,3 +27,12 @@ Thumbs.db
 
 # Local config
 config.json
+
+# Local artifacts/backups
+/%APPDATA%/
+debug_ollama.py
+check_api.py
+test_roberta_local.py
+build/
+dist/
+*.spec

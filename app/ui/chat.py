@@ -34,7 +34,18 @@ class ChatPage(ctk.CTkFrame):
             ctk.CTkLabel(hdr, image=self._avatar_img, text="").pack(side="left", padx=(0, 10))
 
         ctk.CTkLabel(hdr, text="Roberta Bot", font=ctk.CTkFont(T.FONT_FAMILY, 22, "bold"), text_color=T.TEXT).pack(side="left")
-        ctk.CTkLabel(hdr, text="Assistente de DP e Robô de Dúvidas", font=ctk.CTkFont(T.FONT_FAMILY, 11), text_color=T.ACCENT_LIGHT).pack(side="left", padx=14, pady=4)
+        
+        # Status Badge Container
+        self._status_frame = ctk.CTkFrame(hdr, fg_color="transparent")
+        self._status_frame.pack(side="left", padx=15)
+        
+        self._status_dot = ctk.CTkLabel(self._status_frame, text="●", font=ctk.CTkFont(T.FONT_FAMILY, 14), text_color=T.TEXT_MUTED)
+        self._status_dot.pack(side="left")
+        
+        self._status_text = ctk.CTkLabel(self._status_frame, text="Verificando IA...", font=ctk.CTkFont(T.FONT_FAMILY, 10, "bold"), text_color=T.TEXT_SEC)
+        self._status_text.pack(side="left", padx=4)
+        
+        self.after(500, self._check_ai_status)
 
         # Chat Area (Scrollable)
         self._chat_scroll = ctk.CTkScrollableFrame(self, fg_color=T.BG_PANEL, corner_radius=T.CORNER_R)
@@ -52,6 +63,7 @@ class ChatPage(ctk.CTkFrame):
 
         self._send_btn = ctk.CTkButton(input_frame, text="ENVIAR", width=120, height=45, 
                                        fg_color=T.PRIMARY, hover_color=T.PRIMARY_HOVER,
+                                       text_color="#FFFFFF", # Forçar branco no botão azul
                                        font=ctk.CTkFont(T.FONT_FAMILY, 12, "bold"),
                                        command=self._send)
         self._send_btn.pack(side="right")
@@ -66,8 +78,8 @@ class ChatPage(ctk.CTkFrame):
         msg_frame.pack(fill="x", pady=8, padx=10)
 
         # Bubble alignment
-        color = T.PRIMARY_DARK if is_user else T.BG_CARD
-        text_color = T.TEXT if is_user else T.TEXT_SEC
+        color = T.BG_CARD if not is_user else T.PRIMARY
+        text_color = T.TEXT if not is_user else "#FFFFFF"
         
         # Container for Avatar + Bubble (for Roberta)
         container = ctk.CTkFrame(msg_frame, fg_color="transparent")
@@ -76,12 +88,13 @@ class ChatPage(ctk.CTkFrame):
         if not is_user and self._avatar_img:
             ctk.CTkLabel(container, image=self._avatar_img, text="").pack(side="left", anchor="n", padx=(0, 8))
 
-        bubble = ctk.CTkFrame(container, fg_color=color, corner_radius=12)
+        bubble = ctk.CTkFrame(container, fg_color=color, corner_radius=15 if is_user else 15)
         bubble.pack(side="left", padx=0)
 
         # Sender Label
-        lbl_sender = ctk.CTkLabel(bubble, text=sender, font=ctk.CTkFont(T.FONT_FAMILY, 9, "bold"), 
-                                  text_color=T.ACCENT if not is_user else T.ACCENT_LIGHT)
+        lbl_sender = ctk.CTkLabel(bubble, text=sender if not is_user else "Você", 
+                                  font=ctk.CTkFont(T.FONT_FAMILY, 9, "bold"), 
+                                  text_color=T.ACCENT if not is_user else "#E0E7FF")
         lbl_sender.pack(anchor="w", padx=12, pady=(8, 2))
 
         # Text Label
@@ -92,6 +105,16 @@ class ChatPage(ctk.CTkFrame):
         # Auto-scroll to bottom
         self._chat_scroll._parent_canvas.yview_moveto(1.0)
 
+    def _check_ai_status(self):
+        """Atualiza o badge de status (Ollama vs Gemini)"""
+        is_ready = self._chat_service.is_ollama_ready()
+        if is_ready:
+            self._status_dot.configure(text_color=T.SUCCESS)
+            self._status_text.configure(text="IA LOCAL (OLLAMA) ATIVA", text_color=T.SUCCESS)
+        else:
+            self._status_dot.configure(text_color=T.WARNING)
+            self._status_text.configure(text="IA REMOTA (FALLBACK)", text_color=T.WARNING)
+
     def _send(self):
         msg = self._entry.get().strip()
         if not msg:
@@ -100,6 +123,21 @@ class ChatPage(ctk.CTkFrame):
         self._entry.delete(0, "end")
         self._add_message("Você", msg, is_user=True)
         
-        # Resposta da Roberta
-        response = self._chat_service.process_message(msg)
-        self.after(500, lambda: self._add_message("Roberta Bot", response, is_user=False))
+        # Desabilita interação enquanto carrega
+        self._entry.configure(state="disabled")
+        self._send_btn.configure(state="disabled")
+        
+        # Inicia Thead para não congelar o CustomTkinter
+        import threading
+        def fetch_response():
+            response = self._chat_service.process_message(msg)
+            # Retorna para a main thread do Tkinter (thread-safe UI update)
+            self.after(0, lambda: self._on_response(response))
+
+        threading.Thread(target=fetch_response, daemon=True).start()
+
+    def _on_response(self, response):
+        self._add_message("Roberta Bot", response, is_user=False)
+        self._entry.configure(state="normal")
+        self._send_btn.configure(state="normal")
+        self._entry.focus()

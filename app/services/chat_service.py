@@ -1,68 +1,123 @@
 """
 Motor de Conhecimento da Roberta Bot — SGR.IA
-Especialista em DP e rotinas do sistema.
+Especialista em DP e rotinas do sistema (Integrado ao Google Gemini).
 """
 
+import os
+import json
+import google.generativeai as genai
+import requests
 from typing import List, Dict
-import re
 
 class ChatService:
     def __init__(self):
-        # Base de conhecimento baseada no manual e CLT 2026
-        self.kb = [
-            {
-                "keywords": ["ola", "oi", "bom dia", "boa tarde", "boa noite", "apresente", "quem e voce"],
-                "response": "Olá! Eu sou a Roberta Bot, sua assistente especialista da SGR.IA. Fui treinada para tirar suas dúvidas sobre o sistema e rotinas de Departamento Pessoal. Como posso te ajudar hoje?"
-            },
-            {
-                "keywords": ["rescisao", "rescisão", "calculo rescisao", "demissao", "justa causa", "distrato"],
-                "response": "Para calcular uma rescisão, acesse o menu 'Rescisão', selecione o funcionário, o tipo de dispensa (com ou sem justa causa, pedido, etc) e a data do aviso. Eu calculo automaticamente o saldo de salário, férias, 13º, aviso prévio e a multa do FGTS. Além disso, gero um checklist documental para você não esquecer nada!"
-            },
-            {
-                "keywords": ["empresa", "cadastrar empresa", "cnpj", "regime"],
-                "response": "No menu 'Empresas', você pode gerenciar seus clientes contábeis. Informe o CNPJ (que eu valido na hora), Razão Social e o Regime Tributário. É fundamental que a empresa esteja cadastrada para que você possa vincular funcionários a ela."
-            },
-            {
-                "keywords": ["funcionario", "funcionário", "cadastrar funcionario", "cpf", "admissao"],
-                "response": "O cadastro de funcionários fica no menu 'Funcionários'. Lá você informa o CPF, cargo, salário base e a data de admissão. Lembre-se: a data de admissão é crucial para o cálculo correto das férias e do 13º salário!"
-            },
-            {
-                "keywords": ["folha", "pagamento", "holerite", "hora extra", "dsr", "inss", "irrf"],
-                "response": "O módulo de 'Folha de Pagamento' processa o fechamento mensal. Você pode lançar horas extras (50% ou 100%) e eu calculo o DSR automaticamente. Também aplico as tabelas progressivas de INSS e IRRF da CLT 2026, além de demonstrar o custo total da empresa (encargos patronais)."
-            },
-            {
-                "keywords": ["ferias", "férias", "abono", "pecuniario", "1/3"],
-                "response": "O cálculo de férias está no menu 'Férias'. Você pode definir se o funcionário vai vender 10 dias (abono pecuniário) e eu calculo o valor bruto, o 1/3 constitucional e os descontos de INSS/IRRF. O pagamento deve ser feito 2 dias antes do início do gozo."
-            },
-            {
-                "keywords": ["13", "decimo", "décimo", "parcela", "natalino"],
-                "response": "No menu '13º Salário', você pode calcular a 1ª parcela (adiantamento de 50% sem descontos) ou a 2ª parcela (valor integral com deduções de INSS, IRRF e abatimento da 1ª parcela)."
-            },
-            {
-                "keywords": ["clt", "2026", "salario minimo", "valores"],
-                "response": "O SGR.IA está atualizado com a legislação de 2026. O salário mínimo configurado é R$ 1.621,00. As tabelas de INSS e IRRF também seguem as normas vigentes para este ano."
-            },
-            {
-                "keywords": ["relatorio", "exportar", "pdf", "txt"],
-                "response": "Você pode gerar relatórios operacionais no menu 'Relatórios'. Atualmente exportamos em TXT listas de funcionários, empresas e o resumo de rescisões. PDFs de manuais podem ser encontrados na aba 'Tutoriais'."
-            },
-            {
-                "keywords": ["ajuda", "tutorial", "manual", "como usar"],
-                "response": "Se precisar de um guia detalhado, acesse a aba 'Tutoriais' no menu lateral. Lá você encontrará manuais em PDF que mostram o passo a passo de cada funcionalidade do sistema."
-            }
-        ]
-        self.default_response = "Desculpe, não entendi sua dúvida. Sou especialista em SGR.IA e rotinas de DP. Pode perguntar sobre Folha, Férias, Rescisão, Empresas ou como usar o sistema!"
+        self.api_key = ""
+        self._load_config()
+
+        # Prompt de Sistema (System Instruction)
+        self.system_instruction = (
+            "Seu nome é Roberta. Você é a assistente virtual especializada em Recursos Humanos (RH), "
+            "Departamento Pessoal (DP) e CLT (Consolidação das Leis do Trabalho) do sistema SGR.IA. "
+            "Aja SEMPRE como uma especialista sênior na área. "
+            "Seja SEMPRE respeitosa, formal e educada. "
+            "Você foi desenvolvida para tirar as dúvidas dos usuários sobre regras trabalhistas, ponto, "
+            "férias, 13º salário, rescisão, impostos e afins na legislação brasileira de 2026. "
+            "Mantenha um tom profissional. Nunca invente regras legais que não existem. "
+            "Seja prestativa e explique de forma clara."
+        )
+        
+        self.chat_session = None
+        self.ollama_url = "http://localhost:11434/api/chat"
+        self.ollama_model = "llama3" # Alterado para o padrão do 'ollama run llama3'
+        self._setup_gemini()
+
+    def _load_config(self):
+        from app.services.config_service import ConfigService
+        try:
+            config_service = ConfigService()
+            config_dict = config_service._load_config()
+            self.api_key = config_dict.get("gemini_api_key", "")
+        except Exception as e:
+            print(f"Erro ao ler config da api key: {e}")
+
+    def _setup_gemini(self):
+        if not self.api_key or self.api_key.strip() == "":
+            return
+        
+        try:
+            genai.configure(api_key=self.api_key)
+            
+            self.model = genai.GenerativeModel(
+                model_name="gemini-2.0-flash",
+                system_instruction=self.system_instruction
+            )
+            # Inicializa o chat histórico vazio, o Gemini cuidará das mensagens ao longo da sessão
+            self.chat_session = self.model.start_chat(history=[])
+        except Exception as e:
+            print(f"[ERRO] Falha ao inicializar o Gemini: {e}")
+            self.chat_session = None
+
+    def is_ollama_ready(self) -> bool:
+        """Verifica se o Ollama está online e se o modelo está carregado."""
+        try:
+            # Tenta listar os modelos para ver se o serviço responde
+            import requests
+            res = requests.get("http://localhost:11434/api/tags", timeout=2)
+            if res.status_code == 200:
+                models = [m['name'] for m in res.json().get('models', [])]
+                # Verifica se o modelo configurado existe na lista (ou o nome base dele)
+                return any(self.ollama_model in m for m in models)
+            return False
+        except:
+            return False
 
     def process_message(self, message: str) -> str:
-        msg = message.lower().strip()
+        msg = message.strip()
         if not msg:
             return ""
 
-        # Tenta encontrar correspondência por palavras-chave
-        for item in self.kb:
-            for kw in item["keywords"]:
-                # Use regex para encontrar a palavra exata
-                if re.search(r'\b' + re.escape(kw) + r'\b', msg):
-                    return item["response"]
+        # Tenta usar Ollama (IA Local) PRIMEIRO para evitar custos/cotas
+        try:
+            payload = {
+                "model": self.ollama_model,
+                "messages": [{"role": "system", "content": self.system_instruction}, {"role": "user", "content": msg}],
+                "stream": False
+            }
+            res = requests.post(self.ollama_url, json=payload, timeout=60)
+            if res.status_code == 200:
+                return res.json().get("message", {}).get("content", "Erro: Ollama retornou resposta vazia.")
+        except Exception as e:
+            # Se o Ollama não estiver rodando, continua para o Gemini (Fallback)
+            print(f"Ollama local offline ou erro: {e}. Tentando Gemini...")
 
-        return self.default_response
+        # --- FALLBACK PARA GEMINI (Caminho Original) ---
+        if not self.api_key or self.api_key.strip() == "":
+            self._load_config()
+
+        if not self.api_key or self.api_key.strip() == "":
+            from app.services.config_service import ConfigService
+            try:
+                c = ConfigService()
+                path = c.config_path
+                return f"IA Local (Ollama) não encontrada e a API Key está vazia. Path: {path}. Tente instalar o Ollama ou inserir a chave no config.json"
+            except Exception as e:
+                return f"DEBUG FATAL ERROR: {str(e)}"
+
+        if not self.chat_session:
+            self._setup_gemini()
+            
+        if not self.chat_session:
+            return "Ocorreu um problema ao inicializar a comunicação com a IA local e remota. Verifique as configurações."
+
+        try:
+            response = self.chat_session.send_message(msg)
+            return response.text
+        except Exception as e:
+            # Reinicia a sessão em caso de erro de conexão para próxima tentativa
+            self.chat_session = None
+            erro = str(e)
+            if "404" in erro:
+                return f"Erro 404: O modelo de IA não foi encontrado. Contate o suporte.\nDetalhe: {erro}"
+            if "429" in erro:
+              return "Desculpe, a cota de uso da IA remota (Gemini) foi atingida. Por favor, certifique-se de que o Ollama está rodando localmente para uso ilimitado."
+            return f"Desculpe, ocorreu um erro na comunicação com a IA: {erro}"

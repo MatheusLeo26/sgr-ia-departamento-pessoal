@@ -60,7 +60,7 @@ class SGRIA_Launcher(ctk.CTk):
 
         if os.path.exists(logo_path):
             img_p = Image.open(logo_path)
-            logo_img = ctk.CTkImage(light_image=img_p, dark_image=img_p, size=(100, 100))
+            logo_img = ctk.CTkImage(light_image=img_p, dark_image=img_p, size=(120, 120))
             ctk.CTkLabel(content, image=logo_img, text="").pack(pady=(0, 10))
 
         # Title
@@ -73,11 +73,11 @@ class SGRIA_Launcher(ctk.CTk):
         self.status_lbl.pack(pady=(2, 10))
 
         # Progress bar
-        self.progress = ctk.CTkProgressBar(content, height=10, fg_color=T.BG_INPUT, progress_color=T.PRIMARY)
+        self.progress = ctk.CTkProgressBar(content, height=6, fg_color=T.BG_INPUT, progress_color=T.PRIMARY)
         self.progress.set(0)
-        self.progress.pack(fill="x")
+        self.progress.pack(fill="x", pady=(10, 0))
 
-        self.percent_lbl = ctk.CTkLabel(content, text="0%", font=ctk.CTkFont(T.FONT_FAMILY, 9), text_color=T.TEXT_MUTED)
+        self.percent_lbl = ctk.CTkLabel(content, text="0%", font=ctk.CTkFont(T.FONT_FAMILY, 10, "bold"), text_color=T.PRIMARY)
         self.percent_lbl.pack(anchor="e", pady=2)
 
     def start_check(self):
@@ -100,9 +100,14 @@ class SGRIA_Launcher(ctk.CTk):
             server_config = os.path.join(SERVER_PATH, "config.json")
             local_config  = os.path.join(LOCAL_PATH, "config.json")
             
-            # 2. Sincroniza Config se existir no servidor
+            # 2. Sincroniza Config e Ícones se existirem no servidor
             if os.path.exists(server_config):
                 shutil.copy2(server_config, local_config)
+            
+            server_icon = os.path.join(SERVER_PATH, "robot_report_icon.ico")
+            local_icon  = os.path.join(LOCAL_PATH, "icon.ico")
+            if os.path.exists(server_icon):
+                shutil.copy2(server_icon, local_icon)
 
             # 3. Verifica se o executável existe no servidor
             if not os.path.exists(server_exe):

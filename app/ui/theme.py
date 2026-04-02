@@ -6,24 +6,24 @@ import customtkinter as ctk
 
 # -- Backgrounds ----------------------------------------------------------
 # (Light Mode, Dark Mode)
-BG_MAIN    = ("#F5F7FA", "#0D1926") # Branco Gelo / Azul Profundo
-BG_SIDEBAR = ("#EAECEF", "#091520") # Cinza Claro / Azul Sidebar
-BG_PANEL   = ("#FFFFFF", "#132338") # Branco / Azul Painel
-BG_CARD    = ("#FAFAFA", "#1A2E47") # Branco Puro / Azul Card
-BG_INPUT   = ("#FFFFFF", "#0F1E30")
+BG_MAIN    = ("#F8FAFC", "#0B1422") # Cinza Suave / Azul Meia-noite
+BG_SIDEBAR = ("#F1F5F9", "#080E1A") # Sidebar mais contrastada
+BG_PANEL   = ("#FFFFFF", "#0F1A2A") # Branco / Azul Painel Profundo
+BG_CARD    = ("#FFFFFF", "#16253B") # Branco / Azul Card Elevado
+BG_INPUT   = ("#F1F5F9", "#060912")
 
 # -- Brand (Inspirado no Azul da Logo #5376DC) -----------------------------
 PRIMARY       = ("#5376DC", "#5376DC")
-PRIMARY_HOVER = ("#4366CC", "#6386EC")
-PRIMARY_DARK  = ("#3A56A8", "#163D70")
-ACCENT        = ("#7C6FCD", "#7C6FCD")
-ACCENT_HOVER  = ("#8C7FDD", "#8C7FDD")
-ACCENT_LIGHT  = ("#5376DC", "#A89EE0")
+PRIMARY_HOVER = ("#4060C0", "#6A89E6")
+PRIMARY_DARK  = ("#3452A3", "#1A2F5E")
+ACCENT        = ("#6366F1", "#818CF8") # Indigo vibe para modernidade
+ACCENT_HOVER  = ("#4F46E5", "#6366F1")
+ACCENT_LIGHT  = ("#C7D2FE", "#312E81")
 
 # -- Text -----------------------------------------------------------------
-TEXT       = ("#1A1A1A", "#E8EFF8") # Preto / Branco
-TEXT_SEC   = ("#4A5568", "#96ACCA") # Cinza / Azul Sec
-TEXT_MUTED = ("#718096", "#5A7090") # Cinza Muted
+TEXT       = ("#0F172A", "#F8FAFC") # Slate 900 / Slate 50
+TEXT_SEC   = ("#475569", "#94A3B8") # Slate 600 / Slate 400
+TEXT_MUTED = ("#94A3B8", "#475569") # Slate 400 / Slate 600
 
 # -- Status ---------------------------------------------------------------
 SUCCESS    = ("#27AE60", "#27AE60")

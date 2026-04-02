@@ -1,18 +1,20 @@
-# Create shortcut on Desktop for SGR.IA with custom robot icon
-# PowerShell script
-$target = "C:\Users\SrgRH\.gemini\antigravity\scratch\sgr-ia\main.py"
-$workingDir = "C:\Users\SrgRH\.gemini\antigravity\scratch\sgr-ia"
-$icon = "C:\Users\SrgRH\.gemini\antigravity\scratch\sgr-ia\app\assets\robot_report_icon.ico"
+# Cria atalho na Área de Trabalho para o SGR.IA (Lançador de Produção)
+# Aponta para o SGR-IA-Incio.exe no servidor Z:\SGR-IA
+$target       = "Z:\SGR-IA\SGR-IA-Incio.exe"
+$localIcon    = Join-Path $env:APPDATA "SGR-IA\icon.ico"
 $shortcutPath = Join-Path $env:USERPROFILE "Desktop\SGR IA.lnk"
 
-# Use python.exe from PATH – if not, adjust path accordingly
-$pythonExe = "python"
+# Garante que a pasta do ícone exista (mesmo que o launcher ainda não tenha rodado)
+$localDir = Join-Path $env:APPDATA "SGR-IA"
+if (-not (Test-Path $localDir)) { New-Item -ItemType Directory -Path $localDir -Force }
 
-$wsh = New-Object -ComObject WScript.Shell
+$wsh      = New-Object -ComObject WScript.Shell
 $shortcut = $wsh.CreateShortcut($shortcutPath)
-$shortcut.TargetPath = $pythonExe
-$shortcut.Arguments = "`"$target`""
-$shortcut.WorkingDirectory = $workingDir
-$shortcut.IconLocation = $icon
+$shortcut.TargetPath      = $target
+$shortcut.WorkingDirectory = "Z:\SGR-IA"
+$shortcut.IconLocation    = $localIcon
+$shortcut.Description     = "SGR.IA - Departamento Pessoal Inteligente"
 $shortcut.Save()
-Write-Host "Atalho criado em $shortcutPath"
+
+Write-Output "Atalho criado em: $shortcutPath"
+Write-Output "Apontando para: $target"
